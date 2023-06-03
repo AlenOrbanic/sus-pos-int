@@ -1,0 +1,27 @@
+jupyter notebook --NotebookApp.iopub_data_rate_limit=1e10
+
+CMD
+py -m venv venv
+venv\Scripts\activate
+pip install numpy pandas matplotlib
+pip install ipykernel jupyter
+py -m ipykernel install --user --name=naziv_tvoj_projekta
+jupiter notebook
+
+
+for column in df.columns:
+  print(df[column].value_counts())
+
+df.dtypes
+
+list(df['Name'].unique())
+
+df.isnull().sum()
+
+import pandas as pd
+
+df = pd.read_csv('anime.csv')
+
+print(df)
+
+new file na str
