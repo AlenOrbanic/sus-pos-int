@@ -7,6 +7,8 @@ CREATE TABLE `Source` (
   PRIMARY KEY (`Source_Id`)
 );
 
+SELECT * FROM Anime_Type;
+
 CREATE TABLE `Anime_Type` (
   `Anime_Type_Id` INT,
   `Anime_Type_Name` VARCHAR(20),
@@ -19,6 +21,8 @@ CREATE TABLE `Raiting_Type` (
   PRIMARY KEY (`Raiting_Type_Id`)
 );
 
+SELECT * FROM Raiting_Type;
+
 CREATE TABLE `Anime` (
   `MAL_ID` INT,
   `Name` VARCHAR(170),
@@ -27,7 +31,6 @@ CREATE TABLE `Anime` (
   `Anime_Type_Id` INT,
   `Episodes` INT,
   `Aired` DATE,
-  `Description` VARCHAR(50),
   `Producers` VARCHAR(170),
   `Licensors` VARCHAR(170),
   `Studios` VARCHAR(170),
@@ -80,20 +83,56 @@ CREATE TABLE `User_Watching` (
   FOREIGN KEY (`Status_Id`) REFERENCES `Watching_status`(`Status_Id`)
 );
 
-DELIMITER //
+CREATE TABLE `DIM_Dates` (
+  `DIM_dates_id` INT AUTO_INCREMENT,
+  `Year` INT,
+  `Month` INT,
+  `Day` INT,
+  `First_aired` DATE,
+  PRIMARY KEY (`DIM_dates_id`)
+);
 
-CREATE TRIGGER generate_dates_score
-BEFORE INSERT ON DIM_Score
-FOR EACH ROW
-BEGIN
-    SET NEW.start_date = DATE_SUB(CURRENT_DATE(), INTERVAL FLOOR(RAND() * 365) DAY);
-    SET NEW.end_date = DATE_ADD(CURRENT_DATE(), INTERVAL FLOOR(RAND() * 30) DAY);
-END //
+CREATE TABLE `FT_Anime` (
+  `MALS_ID` INT,
+  `Name` VARCHAR(170),
+  `Source` VARCHAR(30),
+  `Genre` VARCHAR(170),
+  `Anime_Type` VARCHAR(20),
+  `Episodes` INT,
+  `DIM_dates_id` INT AUTO_INCREMENT,
+  `Score` INT,
+  `start_date` DATE,
+  `end_date` DATE,
+  `Favorites` INT,
+  `Ranked` INT,
+  `Popularity` INT,
+  `Members` INT,
+  PRIMARY KEY (`MALS_ID`),
+  FOREIGN KEY (`DIM_dates_id`) REFERENCES `DIM_Dates`(`DIM_dates_id`)
+);
 
-DELIMITER ;
+CREATE TABLE `DIM_Creators` (
+  `Producers` VARCHAR(170),
+  `Licensors` VARCHAR(170),
+  `Studios` VARCHAR(170),
+  `Source` VARCHAR(30),
+  `start_date` DATE,
+  `end_date` DATE,
+  `MALS_ID` INT,
+  FOREIGN KEY (`MALS_ID`) REFERENCES `FT_Anime`(`MALS_ID`)
+);
+
+CREATE TABLE `DIM_Users_raiting` (
+  `DIM_Users_Id` INT,
+  `end_date` DATE,
+  `start_date` DATE,
+  `MALS_ID` INT,
+  `Raiting` INT,
+  FOREIGN KEY (`MALS_ID`) REFERENCES `FT_Anime`(`MALS_ID`)
+);
 
 CREATE TABLE `DIM_Score` (
-  `DIM_Scores_ID` INT AUTO_INCREMENT PRIMARY KEY,
+  `MALS_ID` INT,
   `Score_1` INT,
   `Score_2` INT,
   `Score_3` INT,
@@ -104,9 +143,6 @@ CREATE TABLE `DIM_Score` (
   `Score_8` INT,
   `Score_9` INT,
   `Score_10` INT,
-  `start_date` DATE,
-  `end_date` DATE,
-  `MALS_ID` INT,
   FOREIGN KEY (`MALS_ID`) REFERENCES `FT_Anime`(`MALS_ID`)
 );
 
@@ -122,25 +158,6 @@ END //
 
 DELIMITER ;
 
-CREATE TABLE `DIM_Creators` (
-  `Producers` VARCHAR(170),
-  `Licensors` VARCHAR(170),
-  `Studios` VARCHAR(170),
-  `Source` VARCHAR(30),
-  `start_date` DATE,
-  `end_date` DATE,
-  `DIM_Creators_ID` INT PRIMARY KEY AUTO_INCREMENT,
-  `MALS_ID` INT,
-  FOREIGN KEY (`MALS_ID`) REFERENCES `FT_Anime`(`MALS_ID`)
-);
-
-CREATE TABLE `DIM_Dates` (
-  `DIM_dates_id` INT AUTO_INCREMENT PRIMARY KEY,
-  `Year` INT,
-  `Month` INT,
-  `Day` INT,
-  `First_aired` DATE
-);
 
 DELIMITER //
 CREATE TRIGGER increment_date_values
@@ -165,50 +182,11 @@ END //
 
 DELIMITER ;
 
-CREATE TABLE `FT_Anime` (
-  `MALS_ID` INT,
-  `Name` VARCHAR(170),
-  `Source` VARCHAR(30),
-  `Genre` VARCHAR(170),
-  `Anime_Type` VARCHAR(100),
-  `Episodes` INT,
-  `DIM_dates_id` INT AUTO_INCREMENT,
-  `start_date` DATE,
-  `end_date` DATE,
-  PRIMARY KEY (`MALS_ID`),
-  FOREIGN KEY (`DIM_dates_id`) REFERENCES `DIM_Dates`(`DIM_dates_id`)
-);
-
-DELIMITER //
-
-CREATE TRIGGER generate_dates_raiting
-BEFORE INSERT ON DIM_Raiting
-FOR EACH ROW
-BEGIN
-    SET NEW.start_date = DATE_SUB(CURRENT_DATE(), INTERVAL FLOOR(RAND() * 365) DAY);
-    SET NEW.end_date = DATE_ADD(CURRENT_DATE(), INTERVAL FLOOR(RAND() * 30) DAY);
-END //
-
-DELIMITER ;
-
-CREATE TABLE `DIM_Raiting` (
-  `DIM_Raitings_ID` INT PRIMARY KEY AUTO_INCREMENT,
-  `MALS_ID` INT,
-  `Ranked` INT,
-  `Popularity` INT,
-  `Members` INT,
-  `Favorites` INT,
-  `Raiting_type` VARCHAR(20),
-  `Overall_score` Float,
-  `start_date` DATE,
-  `end_date` DATE,
-  FOREIGN KEY (`MALS_ID`) REFERENCES `FT_Anime`(`MALS_ID`)
-);
 
 DELIMITER //
 
 CREATE TRIGGER generate_dates_user
-BEFORE INSERT ON DIM_User
+BEFORE INSERT ON DIM_Users_raiting
 FOR EACH ROW
 BEGIN
     SET NEW.start_date = DATE_SUB(CURRENT_DATE(), INTERVAL FLOOR(RAND() * 365) DAY);
@@ -216,13 +194,3 @@ BEGIN
 END //
 
 DELIMITER ;
-
-CREATE TABLE `DIM_User` (
-  `DIM_Users_Id` INT,
-  `MALS_ID` INT,
-  `Anime_watch_status` VARCHAR(20),
-  `Anime_Raiting` INT,
-  `start_date` DATE,
-  `end_date` DATE,
-  FOREIGN KEY (`MALS_ID`) REFERENCES `FT_Anime`(`MALS_ID`)
-);
